@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MERIDIAN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+  :root{
+    --ink:#171A1F; --surface:#20242B; --surface-2:#2A2F38; --line:#383E48;
+    --gold:#C9A227; --clay:#B5533C; --ivory:#F1EEE6; --muted:#9096A0; --good:#5C8F6B;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--ink); color:var(--ivory); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3{ font-family:'Archivo Expanded',sans-serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  button{ font-family:inherit; cursor:pointer; }
+  .app{ max-width:1180px; margin:0 auto; padding:0 20px; }
+  .tag{ position:relative; clip-path:polygon(14% 0,100% 0,100% 100%,14% 100%,0 50%); }
+  .tag-hole{ position:absolute; left:7px; top:50%; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--ink); }
+  header{ position:sticky; top:0; z-index:50; background:rgba(23,26,31,0.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  .header-row{ display:flex; align-items:center; gap:18px; padding:14px 0; }
+  .logo{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .logo-mark{ background:var(--gold); color:var(--ink); font-weight:800; font-size:14px; padding:8px 14px 8px 20px; }
+  .logo-word{ font-size:20px; font-weight:800; }
+  .search-wrap{ flex:1; position:relative; max-width:420px; }
+  .search-wrap input{ width:100%; background:var(--surface); border:1px solid var(--line); color:var(--ivory); padding:10px 14px 10px 38px; border-radius:999px; font-size:14px; outline:none; }
+  .search-wrap input:focus{ border-color:var(--gold); }
+  .search-wrap svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); opacity:0.6; }
+  .icon-btn{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--muted); position:relative; padding:4px 6px; }
+  .icon-btn svg{ stroke:var(--ivory); }
+  .icon-btn.active-nav, .icon-btn.active-nav svg{ color:var(--gold); stroke:var(--gold); }
+  .badge-count{ position:absolute; top:-2px; right:-2px; background:var(--clay); color:white; font-size:9px; border-radius:50%; width:15px; height:15px; display:flex; align-items:center; justify-content:center; }
+  .icons-row{ display:flex; align-items:center; gap:14px; }
+  .config-banner{ background:#4A2E20; color:#F0C9A8; font-size:12.5px; text-align:center; padding:8px 16px; }
+  .config-banner code{ background:rgba(0,0,0,0.25); padding:2px 6px; border-radius:4px; }
+  nav.categories{ border-bottom:1px solid var(--line); }
+  .cat-row{ display:flex; gap:10px; padding:12px 0; overflow-x:auto; }
+  .cat-pill{ background:var(--surface); border:1px solid var(--line); color:var(--ivory); font-size:13px; padding:8px 18px 8px 22px; white-space:nowrap; font-weight:600; }
+  .cat-pill .tag-hole{ background:var(--ink); }
+  .cat-pill.active{ background:var(--gold); color:var(--ink); }
+  .cat-pill.active .tag-hole{ background:var(--surface); }
+  .view{ display:none; padding:28px 0 60px; }
+  .view.active{ display:block; }
+  .hero{ padding:34px 0 26px; border-bottom:1px solid var(--line); margin-bottom:26px; }
+  .hero .eyebrow{ font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; font-weight:600; }
+  .hero h1{ font-size:38px; margin:0 0 10px; line-height:1.05; }
+  .hero p{ color:var(--muted); max-width:520px; font-size:15px; line-height:1.55; margin:0; }
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media(max-width:920px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:560px){ .grid{ grid-template-columns:1fr 1fr; gap:12px; } .hero h1{font-size:28px;} }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; position:relative; transition:transform .15s, border-color .15s; }
+  .card:hover{ transform:translateY(-3px); border-color:var(--gold); }
+  .card-img{ aspect-ratio:1/1.1; position:relative; overflow:hidden; cursor:pointer; background-size:cover; background-position:center; }
+  .wish-btn{ position:absolute; top:8px; right:8px; background:rgba(23,26,31,0.55); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; z-index:2; }
+  .wish-btn svg{ stroke:var(--ivory); fill:none; }
+  .wish-btn.saved svg{ fill:var(--clay); stroke:var(--clay); }
+  .owner-edit-btn{ position:absolute; top:8px; left:8px; background:var(--gold); color:var(--ink); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; z-index:2; }
+  .card-body{ padding:12px 14px 14px; }
+  .card-cat{ font-size:10px; text-transform:uppercase; letter-spacing:0.09em; color:var(--muted); margin-bottom:4px; }
+  .card-name{ font-size:14px; font-weight:600; margin-bottom:6px; }
+  .card-price{ font-size:14px; color:var(--gold); font-weight:600; }
+  .empty{ text-align:center; padding:70px 20px; color:var(--muted); }
+  .empty h3{ color:var(--ivory); margin-bottom:6px; }
+  .overlay{ position:fixed; inset:0; background:rgba(10,11,13,0.72); z-index:100; display:none; align-items:flex-end; justify-content:center; }
+  .overlay.active{ display:flex; }
+  @media(min-width:760px){ .overlay{ align-items:center; } }
+  .modal{ background:var(--surface); width:100%; max-width:760px; max-height:92vh; overflow-y:auto; border-radius:18px 18px 0 0; border:1px solid var(--line); }
+  @media(min-width:760px){ .modal{ border-radius:18px; } }
+  .modal-top{ display:flex; justify-content:flex-end; padding:14px 14px 0; }
+  .modal-close{ background:var(--surface-2); border:none; color:var(--ivory); border-radius:50%; width:30px; height:30px; }
+  .modal-grid{ display:grid; grid-template-columns:1fr; gap:0; padding:0 24px 28px; }
+  @media(min-width:640px){ .modal-grid{ grid-template-columns:1fr 1fr; gap:26px; } }
+  .thumb-main{ aspect-ratio:1/1; border-radius:10px; margin-bottom:10px; background-size:cover; background-position:center; }
+  .thumb-row{ display:flex; gap:8px; }
+  .thumb-row div{ width:56px; height:56px; border-radius:8px; border:2px solid transparent; cursor:pointer; background-size:cover; background-position:center; }
+  .thumb-row div.active-thumb{ border-color:var(--gold); }
+  .modal-info h2{ font-size:24px; margin:0 0 8px; }
+  .modal-price{ font-size:20px; color:var(--gold); font-weight:700; margin-bottom:16px; }
+  .opt-label{ font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:14px 0 8px; }
+  .opt-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .opt-chip{ border:1px solid var(--line); background:var(--surface-2); color:var(--ivory); font-size:13px; padding:7px 14px; border-radius:8px; }
+  .opt-chip.active{ border-color:var(--gold); color:var(--gold); }
+  .modal-actions{ display:flex; gap:10px; margin-top:22px; }
+  .btn-primary{ background:var(--gold); color:var(--ink); border:none; padding:13px 20px; border-radius:10px; font-weight:700; font-size:14px; flex:1; }
+  .btn-primary:disabled{ opacity:0.5; }
+  .btn-secondary{ background:transparent; border:1px solid var(--line); color:var(--ivory); padding:13px 16px; border-radius:10px; font-size:14px; }
+  .desc{ color:var(--muted); font-size:13.5px; line-height:1.6; margin-top:14px; }
+  .panel{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px; }
+  .auth-panel{ max-width:400px; margin:0 auto; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.06em; }
+  .field input, .field select{ width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--ivory); padding:11px 13px; border-radius:8px; font-size:14px; outline:none; }
+  .field input:focus{ border-color:var(--gold); }
+  .otp-row{ display:flex; gap:8px; }
+  .otp-row input{ text-align:center; width:44px; padding:11px 0; }
+  .section-title{ font-size:13px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin:30px 0 14px; font-weight:600; }
+  .order-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px dashed var(--line); font-size:13.5px; }
+  .order-row:last-child{ border-bottom:none; }
+  .order-status{ font-size:11px; padding:3px 10px; border-radius:999px; background:rgba(92,143,107,0.15); color:var(--good); }
+  .order-status.transit{ background:rgba(201,162,39,0.15); color:var(--gold); }
+  textarea{ width:100%; background:var(--surface-2); border:1px solid var(--line); color:var(--ivory); padding:11px 13px; border-radius:8px; font-size:14px; font-family:inherit; resize:vertical; min-height:90px; }
+  .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+  @media(max-width:640px){ .stat-row{ grid-template-columns:1fr; } }
+  .stat-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px; }
+  .stat-card .num{ font-size:26px; font-weight:800; font-family:'Archivo Expanded'; color:var(--gold); }
+  .stat-card .lbl{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-top:4px; }
+  .owner-table{ width:100%; border-collapse:collapse; }
+  .owner-table th{ text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; padding:10px 8px; border-bottom:1px solid var(--line); }
+  .owner-table td{ padding:12px 8px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:middle; }
+  .mini-thumb{ width:38px; height:38px; border-radius:6px; display:inline-block; vertical-align:middle; margin-right:10px; background-size:cover; background-position:center; }
+  .row-actions button{ background:none; border:1px solid var(--line); color:var(--ivory); border-radius:6px; padding:5px 9px; font-size:12px; margin-right:6px; }
+  .row-actions button:hover{ border-color:var(--gold); color:var(--gold); }
+  .bank-strip{ display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-bottom:24px; gap:14px; flex-wrap:wrap; }
+  .bank-strip .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--good); display:inline-block; margin-right:8px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:600px){ .grid-2{ grid-template-columns:1fr; } }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--gold); color:var(--ink); padding:11px 22px; border-radius:999px; font-size:13px; font-weight:700; z-index:200; display:none; box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:90vw; text-align:center; }
+  .toast.show{ display:block; }
+  .divider-note{ font-size:12px; color:var(--muted); margin-top:6px; }
+  .cat-manage-row{ display:flex; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); }
+  .cat-manage-row:last-child{ border-bottom:none; }
+  .cat-manage-row input{ flex:1; background:var(--surface-2); border:1px solid var(--line); color:var(--ivory); padding:9px 12px; border-radius:8px; font-size:13.5px; }
+  .cat-manage-row button{ background:none; border:1px solid var(--line); color:var(--ivory); border-radius:6px; padding:8px 11px; font-size:12px; }
+  .spinner-row{ text-align:center; padding:40px; color:var(--muted); font-size:13px; }
+  .image-url-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .image-url-row input{ flex:1; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  CONFIG: set this to your deployed backend URL before publishing.
+  Example: 'https://meridian-server.onrender.com/api'
+  Left as localhost so you can test with the backend running on
+  your own machine first.
+============================================================= -->
+<script>
+  window.API_BASE = 'http://localhost:4000/api';
+</script>
+<div class="config-banner" id="configBanner">
+  Frontend is pointing at <code id="apiBaseLabel"></code> — edit <code>window.API_BASE</code> at the top of index.html once your backend is deployed.
+</div>
+
+<header>
+  <div class="app header-row">
+    <div class="logo">
+      <div class="logo-mark tag"><span id="logoMark">MRD</span><div class="tag-hole"></div></div>
+      <div class="logo-word" id="logoWord">MERIDIAN</div>
+    </div>
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" placeholder="Search products...">
+    </div>
+    <div class="icons-row">
+      <button class="icon-btn" id="navHome" onclick="setView('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Shop
+      </button>
+      <button class="icon-btn" id="navWishlist" onclick="setView('wishlist')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5 5 0 00-7.1 0L12 6.3l-1.7-1.7a5 5 0 00-7.1 7.1L12 21l8.8-9.3a5 5 0 000-7.1z"/></svg>Wishlist<span class="badge-count" id="wishCount" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="navBag" onclick="setView('bag')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l1 14H5z"/><path d="M9 7a3 3 0 016 0"/></svg>Bag<span class="badge-count" id="bagCount" style="display:none">0</span>
+      </button>
+      <button class="icon-btn" id="navAccount" onclick="setView('account')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Account
+      </button>
+      <button class="icon-btn" id="navOwner" onclick="setView('owner')" style="display:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 6.5L21 9l-5 4.6L17.4 21 12 17.3 6.6 21 8 13.6 3 9l6.6-.5z"/></svg>Owner
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="categories" id="categoryNav">
+  <div class="app cat-row" id="catRow"></div>
+</nav>
+
+<div class="app">
+
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="eyebrow" id="heroEyebrow"></div>
+      <h1 id="heroTitle"></h1>
+      <p id="heroSubtitle"></p>
+    </div>
+    <div class="grid" id="productGrid"><div class="spinner-row">Loading products…</div></div>
+  </section>
+
+  <section class="view" id="view-wishlist">
+    <div class="hero" style="padding-top:0;"><div class="eyebrow">Saved</div><h1 style="font-size:28px;">Your wishlist</h1></div>
+    <div class="grid" id="wishlistGrid"></div>
+  </section>
+
+  <section class="view" id="view-bag">
+    <div class="hero" style="padding-top:0;"><div class="eyebrow">Bag</div><h1 style="font-size:28px;">Your bag</h1></div>
+    <div class="panel" id="bagPanel"></div>
+  </section>
+
+  <section class="view" id="view-account">
+    <div id="authBlock">
+      <div class="panel auth-panel">
+        <h2 style="margin-top:0;">Sign in with your phone</h2>
+        <p style="color:var(--muted); font-size:13.5px; margin-top:-6px;">A real SMS code will be sent to this number.</p>
+        <div id="authStep1">
+          <div class="field"><label>Full name</label><input id="signupName" placeholder="Jordan Lee"></div>
+          <div class="field"><label>Phone number (with country code)</label><input id="signupPhone" placeholder="+91 98765 43210"></div>
+          <button class="btn-primary" style="width:100%;" onclick="sendOtp()">Send OTP</button>
+        </div>
+        <div id="authStep2" style="display:none;">
+          <div class="field"><label>Enter the code you were texted</label>
+            <div class="otp-row">
+              <input maxlength="1" class="otpDigit"><input maxlength="1" class="otpDigit"><input maxlength="1" class="otpDigit"><input maxlength="1" class="otpDigit">
+            </div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="verifyOtp()">Verify &amp; sign in</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="accountBlock" style="display:none;">
+      <div class="panel"><h2 style="margin:0;">Hi, <span id="accountName"></span></h2><p style="color:var(--muted); font-size:13.5px;">Signed in with <span id="accountPhone" class="mono"></span></p></div>
+      <div class="section-title">Order history</div>
+      <div class="panel" id="ordersPanel"></div>
+      <div class="section-title">Contact customer care</div>
+      <div class="panel">
+        <div class="field"><label>Your email</label><input id="careEmail" placeholder="you@email.com"></div>
+        <div class="field"><label>Order # (optional)</label><input id="careOrder" placeholder="ORD-1042"></div>
+        <div class="field"><label>What's going on?</label><textarea id="careMsg" placeholder="Tell us about your issue or question..."></textarea></div>
+        <button class="btn-primary" onclick="sendCare()">Send to customer care</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-owner">
+    <div class="hero" style="padding-top:0;"><div class="eyebrow">Store owner</div><h1 style="font-size:28px;">Manage your store</h1></div>
+
+    <div id="ownerSignedOutNotice" class="panel" style="display:none;">
+      <p style="margin:0; color:var(--muted);">Sign in from the Account tab with the phone number set as <code>OWNER_PHONE</code> on your backend to unlock this dashboard.</p>
+    </div>
+
+    <div id="ownerContent">
+      <div class="section-title" style="margin-top:0;">Site settings</div>
+      <div class="panel">
+        <div class="grid-2">
+          <div class="field"><label>Store name</label><input id="setStoreName"></div>
+          <div class="field"><label>Logo initials</label><input id="setLogoMark" maxlength="4"></div>
+        </div>
+        <div class="field"><label>Hero eyebrow</label><input id="setHeroEyebrow"></div>
+        <div class="field"><label>Hero heading</label><input id="setHeroTitle"></div>
+        <div class="field"><label>Hero subtext</label><textarea id="setHeroSubtitle"></textarea></div>
+        <div class="grid-2">
+          <div class="field"><label>Accent color</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="color" id="setAccentColor" style="width:46px; height:38px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); padding:2px;">
+              <span class="mono" style="color:var(--muted); font-size:13px;" id="accentPreviewLabel"></span>
+            </div>
+          </div>
+          <div class="field"><label>Customer care inbox</label><input id="setCareEmail"></div>
+        </div>
+        <button class="btn-primary" onclick="saveSiteSettings()">Save site settings</button>
+      </div>
+
+      <div class="section-title">Categories &amp; menu</div>
+      <div class="panel">
+        <div id="categoryManagerList"></div>
+        <div class="grid-2" style="margin-top:14px;">
+          <div class="field" style="margin-bottom:0;"><label>New category name</label><input id="newCategoryInput" placeholder="Kids"></div>
+          <div style="display:flex; align-items:flex-end;"><button class="btn-secondary" style="width:100%;" onclick="addCategory()">Add category</button></div>
+        </div>
+      </div>
+
+      <div class="bank-strip">
+        <div><span class="status-dot" id="bankDot"></span><span id="bankText">Checking bank status…</span></div>
+        <div style="display:flex; gap:8px;">
+          <input id="razorpayAccountIdInput" placeholder="Razorpay linked account id" style="background:var(--surface); border:1px solid var(--line); color:var(--ivory); padding:8px 10px; border-radius:8px; font-size:13px;">
+          <button class="btn-secondary" onclick="connectBank()">Save</button>
+        </div>
+      </div>
+
+      <div class="section-title">Add a new product</div>
+      <div class="panel">
+        <div class="grid-2">
+          <div class="field"><label>Product name</label><input id="newName" placeholder="Recycled canvas tote"></div>
+          <div class="field"><label>Category</label><select id="newCategory"></select></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Price in ₹ (whole rupees)</label><input id="newPrice" placeholder="1499"></div>
+          <div class="field"><label>Sizes (comma separated)</label><input id="newSizes" placeholder="S, M, L, XL"></div>
+        </div>
+        <div class="field"><label>Colors (comma separated)</label><input id="newColors" placeholder="Black, Sand, Olive"></div>
+        <div class="field"><label>Description</label><textarea id="newDesc" placeholder="A short product description"></textarea></div>
+        <div class="field">
+          <label>Product image URLs — minimum 5 required</label>
+          <div id="imageUrlRows"></div>
+          <div class="divider-note">Host images on any image service (e.g. Cloudinary, imgbb, S3) and paste the direct links here.</div>
+        </div>
+        <button class="btn-primary" onclick="addProduct()">Publish product</button>
+      </div>
+
+      <div class="section-title">Your products</div>
+      <div class="panel" style="padding:8px 16px;">
+        <table class="owner-table">
+          <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Images</th><th></th></tr></thead>
+          <tbody id="ownerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="overlay" id="productOverlay" onclick="closeModalBg(event)">
+  <div class="modal">
+    <div class="modal-top"><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-grid" id="modalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.API_BASE;
+document.getElementById('apiBaseLabel').textContent = API;
+
+// ---------------- STATE ----------------
+let products = [];
+let categories = ['Men','Women','Home'];
+let wishlist = [];       // array of product objects
+let bag = [];            // {product, size, color, quantity}
+let currentCategory = 'All';
+let searchQuery = '';
+let currentModalProduct = null;
+let modalState = {size:null, color:null, thumb:0};
+let signedIn = false;
+let account = null;      // {id, name, phone, role}
+let authToken = null;    // kept in memory for this session
+let site = {};
+
+// ---------------- FETCH HELPER ----------------
+async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+  const res = await fetch(API + path, { ...options, headers });
+  let body = null;
+  try { body = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`);
+  return body;
+}
+
+// ---------------- INIT ----------------
+async function init() {
+  try {
+    site = await api('/settings');
+    categories = site.categories || categories;
+  } catch (e) {
+    showToast('Could not reach the backend at ' + API + ' — is it running?');
+  }
+  renderSite();
+  renderCategoryNav();
+  await loadProducts();
+  setView('home');
+}
+
+// ---------------- SITE SETTINGS ----------------
+function renderSite() {
+  document.getElementById('logoMark').textContent = site.logoMark || 'MRD';
+  document.getElementById('logoWord').textContent = site.storeName || 'STORE';
+  document.getElementById('heroEyebrow').textContent = site.heroEyebrow || '';
+  document.getElementById('heroTitle').textContent = site.heroTitle || '';
+  document.getElementById('heroSubtitle').textContent = site.heroSubtitle || '';
+  document.title = site.storeName || 'Store';
+  if (site.accentColor) document.documentElement.style.setProperty('--gold', site.accentColor);
+}
+function populateSiteSettingsForm() {
+  document.getElementById('setStoreName').value = site.storeName || '';
+  document.getElementById('setLogoMark').value = site.logoMark || '';
+  document.getElementById('setHeroEyebrow').value = site.heroEyebrow || '';
+  document.getElementById('setHeroTitle').value = site.heroTitle || '';
+  document.getElementById('setHeroSubtitle').value = site.heroSubtitle || '';
+  document.getElementById('setAccentColor').value = site.accentColor || '#C9A227';
+  document.getElementById('accentPreviewLabel').textContent = site.accentColor || '';
+  document.getElementById('setCareEmail').value = site.careEmail || '';
+  document.getElementById('bankText').textContent = site.bankConnected ? 'Bank account connected — payouts active' : 'No bank account connected yet';
+  document.getElementById('bankDot').style.background = site.bankConnected ? 'var(--good)' : 'var(--clay)';
+}
+document.addEventListener('input', e => {
+  if (e.target.id === 'setAccentColor') {
+    document.getElementById('accentPreviewLabel').textContent = e.target.value;
+    document.documentElement.style.setProperty('--gold', e.target.value);
+  }
+});
+async function saveSiteSettings() {
+  const payload = {
+    storeName: document.getElementById('setStoreName').value.trim(),
+    logoMark: document.getElementById('setLogoMark').value.trim(),
+    heroEyebrow: document.getElementById('setHeroEyebrow').value.trim(),
+    heroTitle: document.getElementById('setHeroTitle').value.trim(),
+    heroSubtitle: document.getElementById('setHeroSubtitle').value.trim(),
+    accentColor: document.getElementById('setAccentColor').value,
+    careEmail: document.getElementById('setCareEmail').value.trim(),
+  };
+  try {
+    site = await api('/settings', { method: 'PATCH', body: JSON.stringify(payload) });
+    renderSite();
+    showToast('Site settings saved');
+  } catch (e) { showToast(e.message); }
+}
+
+// ---------------- CATEGORIES ----------------
+function renderCategoryNav() {
+  const row = document.getElementById('catRow');
+  const all = ['All', ...categories];
+  row.innerHTML = all.map(c => `
+    <button class="cat-pill tag ${c===currentCategory?'active':''}" onclick="setCategory('${c}')"><span class="tag-hole"></span>${c}</button>`).join('');
+  renderCategorySelect();
+  renderCategoryManagerList();
+}
+function setCategory(c){ currentCategory = c; renderCategoryNav(); loadProducts(); }
+function renderCategorySelect() {
+  const sel = document.getElementById('newCategory');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = categories.map(c => `<option ${c===current?'selected':''}>${c}</option>`).join('');
+}
+function renderCategoryManagerList() {
+  const el = document.getElementById('categoryManagerList');
+  if (!el) return;
+  el.innerHTML = categories.map((c,i) => `
+    <div class="cat-manage-row">
+      <input value="${c}" onchange="renameCategory(${i}, this.value)">
+      <button onclick="deleteCategory(${i})">Remove</button>
+    </div>`).join('');
+}
+async function saveCategories(next) {
+  try {
+    site = await api('/settings', { method: 'PATCH', body: JSON.stringify({ categories: next }) });
+    categories = site.categories;
+    renderCategoryNav();
+  } catch (e) { showToast(e.message); }
+}
+function addCategory() {
+  const input = document.getElementById('newCategoryInput');
+  const name = input.value.trim();
+  if (!name) return showToast('Type a category name first');
+  if (categories.includes(name)) return showToast('That category already exists');
+  saveCategories([...categories, name]);
+  input.value = '';
+}
+function renameCategory(i, newName) {
+  newName = newName.trim();
+  if (!newName) return renderCategoryManagerList();
+  const next = [...categories]; next[i] = newName;
+  saveCategories(next);
+}
+function deleteCategory(i) {
+  const next = categories.filter((_, idx) => idx !== i);
+  saveCategories(next);
+}
+
+// ---------------- PRODUCTS ----------------
+async function loadProducts() {
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = '<div class="spinner-row">Loading products…</div>';
+  try {
+    const params = new URLSearchParams();
+    if (currentCategory !== 'All') params.set('category', currentCategory);
+    if (searchQuery) params.set('q', searchQuery);
+    products = await api('/products?' + params.toString());
+    renderProducts();
+  } catch (e) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>Could not load products</h3><div>${e.message}</div></div>`;
+  }
+}
+function isWishlisted(id){ return wishlist.some(p => p.id === id); }
+function cardHtml(p) {
+  const saved = isWishlisted(p.id);
+  const img = (p.images && p.images[0]) || '';
+  const ownerBtn = account?.role === 'OWNER' ? `<button class="owner-edit-btn" onclick="event.stopPropagation(); setView('owner');"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>` : '';
+  return `
+  <div class="card">
+    <div class="card-img" style="background-image:url('${img}')" onclick="openProduct('${p.id}')">
+      ${ownerBtn}
+      <button class="wish-btn ${saved?'saved':''}" onclick="event.stopPropagation(); toggleWishlist('${p.id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" stroke-width="2"><path d="M20.8 4.6a5 5 0 00-7.1 0L12 6.3l-1.7-1.7a5 5 0 00-7.1 7.1L12 21l8.8-9.3a5 5 0 000-7.1z"/></svg>
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="card-cat">${p.category}</div>
+      <div class="card-name">${p.name}</div>
+      <div class="card-price mono">₹${(p.price/100).toLocaleString('en-IN')}</div>
+    </div>
+  </div>`;
+}
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = products.length ? products.map(cardHtml).join('') : `
+    <div class="empty" style="grid-column:1/-1;"><h3>No matches</h3><div>Try a different keyword or category.</div></div>`;
+}
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  loadProducts();
+});
+
+// ---------------- WISHLIST ----------------
+async function loadWishlist() {
+  if (!signedIn) { wishlist = []; renderWishlistView(); return; }
+  try {
+    wishlist = await api('/wishlist');
+    updateWishBadge();
+    renderProducts();
+    renderWishlistView();
+  } catch (e) { showToast(e.message); }
+}
+function updateWishBadge() {
+  const badge = document.getElementById('wishCount');
+  badge.style.display = wishlist.length ? 'flex' : 'none';
+  badge.textContent = wishlist.length;
+}
+async function toggleWishlist(id) {
+  if (!signedIn) { showToast('Sign in first to save items'); setView('account'); return; }
+  try {
+    if (isWishlisted(id)) await api('/wishlist/' + id, { method: 'DELETE' });
+    else await api('/wishlist/' + id, { method: 'POST' });
+    await loadWishlist();
+  } catch (e) { showToast(e.message); }
+}
+function renderWishlistView() {
+  const grid = document.getElementById('wishlistGrid');
+  grid.innerHTML = wishlist.length ? wishlist.map(cardHtml).join('') : `
+    <div class="empty" style="grid-column:1/-1;"><h3>Nothing saved yet</h3><div>Tap the heart on any product to save it here.</div></div>`;
+}
+
+// ---------------- PRODUCT MODAL ----------------
+function openProduct(id) {
+  currentModalProduct = products.find(p => p.id === id) || wishlist.find(p => p.id === id);
+  if (!currentModalProduct) return;
+  modalState = { size: currentModalProduct.sizes[0], color: currentModalProduct.colors[0], thumb: 0 };
+  renderModal();
+  document.getElementById('productOverlay').classList.add('active');
+}
+function closeModal(){ document.getElementById('productOverlay').classList.remove('active'); }
+function closeModalBg(e){ if (e.target.id === 'productOverlay') closeModal(); }
+function selectThumb(i){ modalState.thumb = i; renderModal(); }
+function selectSize(s){ modalState.size = s; renderModal(); }
+function selectColor(c){ modalState.color = c; renderModal(); }
+function renderModal() {
+  const p = currentModalProduct;
+  const imgs = p.images && p.images.length ? p.images : [''];
+  const thumbs = imgs.map((src,i) => `<div class="${i===modalState.thumb?'active-thumb':''}" style="background-image:url('${src}')" onclick="selectThumb(${i})"></div>`).join('');
+  document.getElementById('modalContent').innerHTML = `
+    <div>
+      <div class="thumb-main" style="background-image:url('${imgs[modalState.thumb]}')"></div>
+      <div class="thumb-row">${thumbs}</div>
+    </div>
+    <div class="modal-info">
+      <div class="card-cat">${p.category}</div>
+      <h2>${p.name}</h2>
+      <div class="modal-price mono">₹${(p.price/100).toLocaleString('en-IN')}</div>
+      <div class="opt-label">Size</div>
+      <div class="opt-row">${p.sizes.map(s => `<button class="opt-chip ${s===modalState.size?'active':''}" onclick="selectSize('${s}')">${s}</button>`).join('')}</div>
+      <div class="opt-label">Color</div>
+      <div class="opt-row">${p.colors.map(c => `<button class="opt-chip ${c===modalState.color?'active':''}" onclick="selectColor('${c}')">${c}</button>`).join('')}</div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="addToBag()">Add to bag</button>
+        <button class="btn-secondary" onclick="shareProduct('${p.id}')">Share link</button>
+      </div>
+      <div class="desc">${p.description || ''}</div>
+    </div>`;
+}
+function addToBag() {
+  bag.push({ product: currentModalProduct, size: modalState.size, color: modalState.color, quantity: 1 });
+  document.getElementById('bagCount').style.display = 'flex';
+  document.getElementById('bagCount').textContent = bag.length;
+  showToast(`Added to bag — ${currentModalProduct.name}, ${modalState.size}, ${modalState.color}`);
+}
+function shareProduct(id) {
+  const url = `${location.origin}${location.pathname}?product=${id}`;
+  navigator.clipboard?.writeText(url).catch(()=>{});
+  showToast('Product link copied: ' + url);
+}
+
+// ---------------- BAG / CHECKOUT ----------------
+function renderBag() {
+  const panel = document.getElementById('bagPanel');
+  if (!bag.length) { panel.innerHTML = '<div class="divider-note">Your bag is empty.</div>'; return; }
+  const total = bag.reduce((s,i) => s + i.product.price * i.quantity, 0);
+  panel.innerHTML = bag.map((i,idx) => `
+    <div class="order-row">
+      <div><strong>${i.product.name}</strong><br><span style="color:var(--muted)">${i.size} · ${i.color}</span></div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="mono">₹${(i.product.price/100).toLocaleString('en-IN')}</span>
+        <button class="btn-secondary" onclick="removeFromBag(${idx})">Remove</button>
+      </div>
+    </div>`).join('') + `
+    <div class="order-row" style="border-bottom:none; margin-top:8px;">
+      <strong>Total</strong><strong class="mono">₹${(total/100).toLocaleString('en-IN')}</strong>
+    </div>
+    <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="checkout()">Pay with Razorpay</button>`;
+}
+function removeFromBag(idx) {
+  bag.splice(idx,1);
+  document.getElementById('bagCount').style.display = bag.length ? 'flex' : 'none';
+  document.getElementById('bagCount').textContent = bag.length;
+  renderBag();
+}
+async function checkout() {
+  if (!signedIn) { showToast('Sign in first to check out'); setView('account'); return; }
+  if (!bag.length) return showToast('Your bag is empty');
+  try {
+    const items = bag.map(i => ({ productId: i.product.id, size: i.size, color: i.color, quantity: i.quantity }));
+    const order = await api('/payments/checkout', { method: 'POST', body: JSON.stringify({ items }) });
+    const rzp = new Razorpay({
+      key: order.key,
+      amount: order.amount,
+      currency: 'INR',
+      name: site.storeName || 'Store',
+      order_id: order.razorpayOrderId,
+      prefill: { name: account.name, contact: account.phone },
+      handler: function () {
+        showToast('Payment received — your order is confirmed');
+        bag = [];
+        document.getElementById('bagCount').style.display = 'none';
+        renderBag();
+        loadOrders();
+      },
+      theme: { color: site.accentColor || '#C9A227' },
+    });
+    rzp.open();
+  } catch (e) { showToast(e.message); }
+}
+
+// ---------------- VIEW SWITCHING ----------------
+function setView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('active-nav'));
+  const navMap = { home:'navHome', wishlist:'navWishlist', bag:'navBag', account:'navAccount', owner:'navOwner' };
+  document.getElementById(navMap[name]).classList.add('active-nav');
+  document.getElementById('categoryNav').style.display = name === 'home' ? 'block' : 'none';
+  if (name === 'wishlist') loadWishlist();
+  if (name === 'bag') renderBag();
+  if (name === 'account' && signedIn) loadOrders();
+  if (name === 'owner') renderOwnerDashboard();
+}
+
+// ---------------- AUTH ----------------
+async function sendOtp() {
+  const name = document.getElementById('signupName').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  if (!name || !phone) return showToast('Add your name and phone number first');
+  try {
+    await api('/auth/send-otp', { method: 'POST', body: JSON.stringify({ name, phone }) });
+    document.getElementById('authStep1').style.display = 'none';
+    document.getElementById('authStep2').style.display = 'block';
+    showToast('Code sent to ' + phone);
+  } catch (e) { showToast(e.message); }
+}
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('otpDigit') && e.target.value) {
+    const all = Array.from(document.querySelectorAll('.otpDigit'));
+    const idx = all.indexOf(e.target);
+    if (idx < all.length - 1) all[idx+1].focus();
+  }
+});
+async function verifyOtp() {
+  const name = document.getElementById('signupName').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const code = Array.from(document.querySelectorAll('.otpDigit')).map(i => i.value).join('');
+  try {
+    const result = await api('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ name, phone, code }) });
+    authToken = result.token;
+    account = result.user;
+    signedIn = true;
+    document.getElementById('authBlock').style.display = 'none';
+    document.getElementById('accountBlock').style.display = 'block';
+    document.getElementById('accountName').textContent = account.name.split(' ')[0];
+    document.getElementById('accountPhone').textContent = account.phone;
+    document.getElementById('navOwner').style.display = account.role === 'OWNER' ? 'flex' : 'none';
+    showToast('Signed in — welcome, ' + account.name.split(' ')[0]);
+    await loadWishlist();
+    await loadOrders();
+    renderProducts();
+  } catch (e) { showToast(e.message); }
+}
+async function loadOrders() {
+  try {
+    const orders = await api('/orders');
+    document.getElementById('ordersPanel').innerHTML = orders.length ? orders.map(o => `
+      <div class="order-row">
+        <div><strong>${o.items.map(i=>i.product.name).join(', ')}</strong><br><span style="color:var(--muted)">${o.id.slice(0,8)} · ${new Date(o.createdAt).toLocaleDateString()}</span></div>
+        <div style="text-align:right;"><div class="mono">₹${(o.totalAmount/100).toLocaleString('en-IN')}</div><span class="order-status ${o.status==='IN_TRANSIT'?'transit':''}">${o.status.replace('_',' ')}</span></div>
+      </div>`).join('') : '<div class="divider-note">No orders yet.</div>';
+  } catch (e) {}
+}
+async function sendCare() {
+  const email = document.getElementById('careEmail').value.trim();
+  const message = document.getElementById('careMsg').value.trim();
+  const orderRef = document.getElementById('careOrder').value.trim();
+  if (!email || !message) return showToast('Add your email and a message first');
+  try {
+    await api('/orders/support', { method: 'POST', body: JSON.stringify({ email, message, orderRef }) });
+    showToast('Sent to ' + (site.careEmail || 'customer care'));
+    document.getElementById('careMsg').value = '';
+  } catch (e) { showToast(e.message); }
+}
+
+// ---------------- OWNER DASHBOARD ----------------
+function renderImageUrlRows(values = ['','','','','']) {
+  const el = document.getElementById('imageUrlRows');
+  el.innerHTML = values.map((v,i) => `<div class="image-url-row"><input class="imgUrlInput" placeholder="https://... image ${i+1}" value="${v}"></div>`).join('');
+}
+function renderOwnerDashboard() {
+  if (!signedIn || account?.role !== 'OWNER') {
+    document.getElementById('ownerSignedOutNotice').style.display = 'block';
+    document.getElementById('ownerContent').style.display = 'none';
+    return;
+  }
+  document.getElementById('ownerSignedOutNotice').style.display = 'none';
+  document.getElementById('ownerContent').style.display = 'block';
+  populateSiteSettingsForm();
+  renderCategorySelect();
+  if (!document.getElementById('imageUrlRows').children.length) renderImageUrlRows();
+  refreshOwnerProductTable();
+}
+async function refreshOwnerProductTable() {
+  try {
+    const all = await api('/products');
+    document.getElementById('ownerTableBody').innerHTML = all.map(p => `
+      <tr>
+        <td><span class="mini-thumb" style="background-image:url('${(p.images&&p.images[0])||''}')"></span>${p.name}</td>
+        <td>${p.category}</td>
+        <td class="mono">₹${(p.price/100).toLocaleString('en-IN')}</td>
+        <td>${(p.images||[]).length} photos</td>
+        <td class="row-actions"><button onclick="deleteProduct('${p.id}')">Delete</button></td>
+      </tr>`).join('');
+  } catch (e) { showToast(e.message); }
+}
+async function addProduct() {
+  const name = document.getElementById('newName').value.trim();
+  const category = document.getElementById('newCategory').value;
+  const priceRupees = parseFloat(document.getElementById('newPrice').value);
+  const sizes = document.getElementById('newSizes').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const colors = document.getElementById('newColors').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const description = document.getElementById('newDesc').value.trim();
+  const images = Array.from(document.querySelectorAll('.imgUrlInput')).map(i => i.value.trim()).filter(Boolean);
+  if (!name || !priceRupees || !sizes.length || !colors.length) return showToast('Fill in name, price, sizes and colors');
+  if (images.length < 5) return showToast('Add all 5 image URLs before publishing');
+  try {
+    await api('/products', { method: 'POST', body: JSON.stringify({ name, category, price: Math.round(priceRupees*100), sizes, colors, images, description }) });
+    showToast('Published: ' + name);
+    document.getElementById('newName').value = '';
+    document.getElementById('newPrice').value = '';
+    document.getElementById('newSizes').value = '';
+    document.getElementById('newColors').value = '';
+    document.getElementById('newDesc').value = '';
+    renderImageUrlRows();
+    refreshOwnerProductTable();
+    loadProducts();
+  } catch (e) { showToast(e.message); }
+}
+async function deleteProduct(id) {
+  try {
+    await api('/products/' + id, { method: 'DELETE' });
+    showToast('Product removed');
+    refreshOwnerProductTable();
+    loadProducts();
+  } catch (e) { showToast(e.message); }
+}
+async function connectBank() {
+  const id = document.getElementById('razorpayAccountIdInput').value.trim();
+  if (!id) return showToast('Paste your Razorpay linked account id first');
+  try {
+    await api('/payments/connect-bank', { method: 'POST', body: JSON.stringify({ razorpayAccountId: id }) });
+    site.bankConnected = true;
+    populateSiteSettingsForm();
+    showToast('Bank account connected');
+  } catch (e) { showToast(e.message); }
+}
+
+// ---------------- TOAST ----------------
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+init();
+</script>
+</body>
+</html>

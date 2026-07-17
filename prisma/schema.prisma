@@ -1,0 +1,106 @@
+// This file defines your database tables. Prisma turns this into real
+// PostgreSQL tables and gives you a type-safe client to query them.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  OWNER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String
+  email     String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+
+  wishlist  Wishlist[]
+  orders    Order[]
+  queries   SupportQuery[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  price       Int      // stored in paise/cents to avoid float rounding issues
+  sizes       String[] // e.g. ["S","M","L"]
+  colors      String[] // e.g. ["Black","Olive"]
+  images      String[] // array of image URLs, min 5 enforced in route logic
+  description String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  wishlistedBy Wishlist[]
+  orderItems   OrderItem[]
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String
+  totalAmount   Int
+  status        String      @default("PLACED") // PLACED, IN_TRANSIT, DELIVERED, CANCELLED
+  razorpayOrderId String?
+  paymentStatus String      @default("PENDING") // PENDING, PAID, FAILED
+  createdAt     DateTime    @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  size      String
+  color     String
+  price     Int
+  quantity  Int     @default(1)
+}
+
+model SupportQuery {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  orderRef  String?
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// Single row table holding editable site content (store name, hero text, etc.)
+model SiteSettings {
+  id           Int    @id @default(1)
+  storeName    String @default("MERIDIAN")
+  logoMark     String @default("MRD")
+  heroEyebrow  String @default("New season · All categories")
+  heroTitle    String @default("Things worth keeping.")
+  heroSubtitle String @default("Apparel and everyday goods for men, women, and the home.")
+  accentColor  String @default("#C9A227")
+  careEmail    String @default("care@yourstore.example")
+  categories   String[] @default(["Men","Women","Home"])
+  bankConnected Boolean @default(false)
+  razorpayAccountId String?
+}
