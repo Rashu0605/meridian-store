@@ -31,7 +31,7 @@ const productSchema = z.object({
   price: z.number().int().positive(), // in paise/cents
   sizes: z.array(z.string()).min(1),
   colors: z.array(z.string()).min(1),
-  images: z.array(z.string().url()).min(5, 'At least 5 product images are required.'),
+  images: z.array(z.string().url()).min(1, 'At least 1 product image is required.'),
   description: z.string().optional(),
 });
 
@@ -47,7 +47,7 @@ router.post('/', requireAuth, requireOwner, async (req, res) => {
 router.patch('/:id', requireAuth, requireOwner, async (req, res) => {
   const parse = productSchema.partial().safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.issues[0].message });
-  if (parse.data.images && parse.data.images.length < 5) {
+  if (parse.data.images && parse.data.images.length < 1) {
     return res.status(400).json({ error: 'At least 5 product images are required.' });
   }
   const product = await prisma.product.update({ where: { id: req.params.id }, data: parse.data });
