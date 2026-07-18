@@ -748,7 +748,7 @@ async function addProduct() {
   const description = document.getElementById('newDesc').value.trim();
   const images = Array.from(document.querySelectorAll('.imgUrlInput')).map(i => i.value.trim()).filter(Boolean);
   if (!name || !priceRupees || !sizes.length || !colors.length) return showToast('Fill in name, price, sizes and colors');
-  if (images.length < 1) return showToast('Add all 5 image URLs before publishing');
+  if (images.length < 1) return showToast('Add at least 1 product image before publishing');
   try {
     await api('/products', { method: 'POST', body: JSON.stringify({ name, category, price: Math.round(priceRupees*100), sizes, colors, images, description }) });
     showToast('Published: ' + name);
