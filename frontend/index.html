@@ -726,16 +726,18 @@ function renderOwnerDashboard() {
   if (!document.getElementById('imageUrlRows').children.length) renderImageUrlRows();
   refreshOwnerProductTable();
 }
+let ownerProducts = [];
 async function refreshOwnerProductTable() {
   try {
     const all = await api('/products');
-    document.getElementById('ownerTableBody').innerHTML = all.map(p => `
+    ownerProducts = all;
+    document.getElementById('ownerTableBody').innerHTML = all.map(p => ` `
       <tr>
         <td><span class="mini-thumb" style="background-image:url('${(p.images&&p.images[0])||''}')"></span>${p.name}</td>
         <td>${p.category}</td>
         <td class="mono">₹${(p.price/100).toLocaleString('en-IN')}</td>
         <td>${(p.images||[]).length} photos</td>
-        <td class="row-actions"><button onclick="deleteProduct('${p.id}')">Delete</button></td>
+         <td class="row-actions"><button onclick="editProduct('${p.id}')">Edit</button> <button onclick="deleteProduct('${p.id}')">Delete</button></td>
       </tr>`).join('');
   } catch (e) { showToast(e.message); }
 }
