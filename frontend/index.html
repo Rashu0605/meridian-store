@@ -294,7 +294,7 @@
         <div class="field"><label>Colors (comma separated)</label><input id="newColors" placeholder="Black, Sand, Olive"></div>
         <div class="field"><label>Description</label><textarea id="newDesc" placeholder="A short product description"></textarea></div>
         <div class="field">
-          <label>Product image URLs — minimum 5 required</label>
+          <label>Product image URLs — 1 to 5 allowed</label>
           <div id="imageUrlRows"></div>
           <div class="divider-note">Host images on any image service (e.g. Cloudinary, imgbb, S3) and paste the direct links here.</div>
         </div>
@@ -748,7 +748,7 @@ async function addProduct() {
   const description = document.getElementById('newDesc').value.trim();
   const images = Array.from(document.querySelectorAll('.imgUrlInput')).map(i => i.value.trim()).filter(Boolean);
   if (!name || !priceRupees || !sizes.length || !colors.length) return showToast('Fill in name, price, sizes and colors');
-  if (images.length < 5) return showToast('Add all 5 image URLs before publishing');
+  if (images.length < 1) return showToast('Add all 5 image URLs before publishing');
   try {
     await api('/products', { method: 'POST', body: JSON.stringify({ name, category, price: Math.round(priceRupees*100), sizes, colors, images, description }) });
     showToast('Published: ' + name);
