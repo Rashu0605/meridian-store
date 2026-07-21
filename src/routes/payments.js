@@ -14,7 +14,7 @@ const razorpay = new Razorpay({
 
 const cartItemSchema = z.object({
   productId: z.string(),
-  size: z.string(),
+  size: z.string().nullable().optional(),
   color: z.string(),
   quantity: z.number().int().positive().default(1),
 });
@@ -41,7 +41,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
       userId: req.user.userId,
       totalAmount,
       items: { create: items.map(i => ({
-        productId: i.productId, size: i.size, color: i.color,
+        productId: i.productId, size: i.size || '', color: i.color,
         quantity: i.quantity, price: priceMap[i.productId] || 0,
       })) },
     },
