@@ -29,11 +29,13 @@ model User {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  category    String
-  price       Int      // stored in paise/cents to avoid float rounding issues
-  sizes       String[] // e.g. ["S","M","L"]
+  id            String   @id @default(uuid())
+  name          String
+  category      String
+  price         Int      // stored in paise/cents to avoid float rounding issues
+  originalPrice Int?     // MRP before discount, in paise — optional
+  stock         Int      @default(10)
+  sizes         String[] // e.g. ["S","M","L"]
   colors      String[] // e.g. ["Black","Olive"]
   images      String[] // array of image URLs, min 5 enforced in route logic
   description String   @default("")
