@@ -340,7 +340,7 @@
         </div>
         <div class="grid-2">
           <div class="field"><label>Stock quantity</label><input id="newStock" placeholder="10"></div>
-          <div class="field"><label>Sizes (comma separated)</label><input id="newSizes" placeholder="One Size"></div>
+          <div class="field"><label>Sizes (comma separated, optional)</label><input id="newSizes" placeholder="Leave blank for one-size items, e.g. earrings"></div>
         </div>
         <div class="field"><label>Colors (comma separated)</label><input id="newColors" placeholder="Gold, Antique Gold"></div>
         <div class="field"><label>Description</label><textarea id="newDesc" placeholder="A short product description"></textarea></div>
@@ -602,7 +602,7 @@ function renderWishlistView() {
 function openProduct(id) {
   currentModalProduct = products.find(p => p.id === id) || wishlist.find(p => p.id === id);
   if (!currentModalProduct) return;
-  modalState = { size: currentModalProduct.sizes[0], color: currentModalProduct.colors[0], thumb: 0, qty: 1 };
+  modalState = { size: (currentModalProduct.sizes && currentModalProduct.sizes[0]) || null, color: currentModalProduct.colors[0], thumb: 0, qty: 1 };
   renderModal();
   document.getElementById('productOverlay').classList.add('active');
 }
@@ -644,8 +644,9 @@ function renderModal() {
       ${priceBlock}
       <div class="tax-note">(inclusive of all taxes)</div>
       ${stockText}
+      ${(p.sizes && p.sizes.length) ? `
       <div class="opt-label">Size</div>
-      <div class="opt-row">${p.sizes.map(s => `<button class="opt-chip ${s===modalState.size?'active':''}" onclick="selectSize('${s}')">${s}</button>`).join('')}</div>
+      <div class="opt-row">${p.sizes.map(s => `<button class="opt-chip ${s===modalState.size?'active':''}" onclick="selectSize('${s}')">${s}</button>`).join('')}</div>` : ''}
       <div class="opt-label">Color</div>
       <div class="opt-row">${p.colors.map(c => `<button class="opt-chip ${c===modalState.color?'active':''}" onclick="selectColor('${c}')">${c}</button>`).join('')}</div>
       <div class="opt-label">Quantity</div>
@@ -886,7 +887,7 @@ async function addProduct() {
   const colors = document.getElementById('newColors').value.split(',').map(s=>s.trim()).filter(Boolean);
   const description = document.getElementById('newDesc').value.trim();
   const images = Array.from(document.querySelectorAll('.imgUrlInput')).map(i => i.value.trim()).filter(Boolean);
-  if (!name || !priceRupees || !sizes.length || !colors.length) return showToast('Fill in name, price, sizes and colors');
+  if (!name || !priceRupees || !colors.length) return showToast('Fill in name, price and colors');
   if (images.length < 1) return showToast('Add at least 1 product image before publishing');
   const payload = { name, category, price: Math.round(priceRupees*100), sizes, colors, images, description };
   if (originalPriceRupees) payload.originalPrice = Math.round(originalPriceRupees*100);
