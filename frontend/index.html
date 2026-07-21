@@ -328,8 +328,8 @@
         <div class="stat-card"><div class="num">—</div><div class="lbl">Revenue this month</div></div>
       </div>
 
-      <div class="section-title">Add a new product</div>
-      <div class="panel">
+      <div class="section-title" id="productFormTitle">Add a new product</div>
+      <div class="panel" id="productFormPanel">
         <div class="grid-2">
           <div class="field"><label>Product name</label><input id="newName" placeholder="Antique Gold Jhumka Earrings"></div>
           <div class="field"><label>Category</label><select id="newCategory"></select></div>
@@ -349,7 +349,10 @@
           <div id="imageUrlRows"></div>
           <div class="divider-note">Host images on any image service (e.g. Cloudinary, imgbb, S3) and paste the direct links here.</div>
         </div>
-        <button class="btn-primary" onclick="addProduct()">Publish product</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-primary" id="productFormSubmitBtn" onclick="addProduct()">Publish product</button>
+          <button class="btn-secondary" id="productFormCancelBtn" onclick="cancelEdit()" style="display:none;">Cancel edit</button>
+        </div>
       </div>
 
       <div class="section-title">Your products</div>
@@ -406,6 +409,7 @@ let account = null;
 let authToken = null;
 let site = {};
 let ownerProducts = [];
+let editingProductId = null;
 
 async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
@@ -832,9 +836,45 @@ async function refreshOwnerProductTable() {
         <td class="mono">₹${(p.price/100).toLocaleString('en-IN')}${p.originalPrice ? ` <span style="color:var(--muted); text-decoration:line-through; font-size:11px;">₹${(p.originalPrice/100).toLocaleString('en-IN')}</span>` : ''}</td>
         <td>${p.stock ?? '—'}</td>
         <td>${(p.images||[]).length} photos</td>
-        <td class="row-actions"><button onclick="deleteProduct('${p.id}')">Delete</button></td>
+        <td class="row-actions"><button onclick="editProduct('${p.id}')">Edit</button><button onclick="deleteProduct('${p.id}')">Delete</button></td>
       </tr>`).join('');
   } catch (e) { showToast(e.message); }
+}
+function resetProductForm() {
+  document.getElementById('newName').value = '';
+  document.getElementById('newPrice').value = '';
+  document.getElementById('newOriginalPrice').value = '';
+  document.getElementById('newStock').value = '';
+  document.getElementById('newSizes').value = '';
+  document.getElementById('newColors').value = '';
+  document.getElementById('newDesc').value = '';
+  renderImageUrlRows();
+  renderCategorySelect();
+}
+function editProduct(id) {
+  const p = ownerProducts.find(x => x.id === id);
+  if (!p) return showToast('Could not find that product');
+  editingProductId = id;
+  document.getElementById('newName').value = p.name || '';
+  document.getElementById('newCategory').value = p.category || '';
+  document.getElementById('newPrice').value = p.price ? (p.price/100) : '';
+  document.getElementById('newOriginalPrice').value = p.originalPrice ? (p.originalPrice/100) : '';
+  document.getElementById('newStock').value = (p.stock ?? '');
+  document.getElementById('newSizes').value = (p.sizes||[]).join(', ');
+  document.getElementById('newColors').value = (p.colors||[]).join(', ');
+  document.getElementById('newDesc').value = p.description || '';
+  renderImageUrlRows((p.images && p.images.length) ? p.images : ['']);
+  document.getElementById('productFormTitle').textContent = 'Edit product';
+  document.getElementById('productFormSubmitBtn').textContent = 'Save changes';
+  document.getElementById('productFormCancelBtn').style.display = 'inline-block';
+  document.getElementById('productFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function cancelEdit() {
+  editingProductId = null;
+  resetProductForm();
+  document.getElementById('productFormTitle').textContent = 'Add a new product';
+  document.getElementById('productFormSubmitBtn').textContent = 'Publish product';
+  document.getElementById('productFormCancelBtn').style.display = 'none';
 }
 async function addProduct() {
   const name = document.getElementById('newName').value.trim();
@@ -852,16 +892,15 @@ async function addProduct() {
   if (originalPriceRupees) payload.originalPrice = Math.round(originalPriceRupees*100);
   if (!isNaN(stock)) payload.stock = stock;
   try {
-    await api('/products', { method: 'POST', body: JSON.stringify(payload) });
-    showToast('Published: ' + name);
-    document.getElementById('newName').value = '';
-    document.getElementById('newPrice').value = '';
-    document.getElementById('newOriginalPrice').value = '';
-    document.getElementById('newStock').value = '';
-    document.getElementById('newSizes').value = '';
-    document.getElementById('newColors').value = '';
-    document.getElementById('newDesc').value = '';
-    renderImageUrlRows();
+    if (editingProductId) {
+      await api('/products/' + editingProductId, { method: 'PATCH', body: JSON.stringify(payload) });
+      showToast('Updated: ' + name);
+      cancelEdit();
+    } else {
+      await api('/products', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('Published: ' + name);
+      resetProductForm();
+    }
     refreshOwnerProductTable();
     loadProducts();
   } catch (e) { showToast(e.message); }
