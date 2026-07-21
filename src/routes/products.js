@@ -29,6 +29,8 @@ const productSchema = z.object({
   name: z.string().min(1),
   category: z.string().min(1),
   price: z.number().int().positive(), // in paise/cents
+  originalPrice: z.number().int().positive().optional(),
+  stock: z.number().int().nonnegative().optional(),
   sizes: z.array(z.string()).min(1),
   colors: z.array(z.string()).min(1),
   images: z.array(z.string().url()).min(1, 'At least 1 product image is required.'),
