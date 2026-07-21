@@ -24,13 +24,11 @@
 
   /* ---------- TOP UTILITY STRIP ---------- */
   .utility-strip{ background:var(--indigo); color:#fff; font-size:12px; text-align:center; padding:6px 16px; letter-spacing:0.03em; }
-  .config-banner{ background:#3a1410; color:#f3c9c0; font-size:11.5px; text-align:center; padding:6px 16px; }
-  .config-banner code{ background:rgba(255,255,255,0.12); padding:1px 5px; border-radius:4px; }
 
   /* ---------- HEADER ---------- */
   header{ position:sticky; top:0; z-index:50; background:var(--paper); border-bottom:1px solid var(--line); }
   .header-row{ display:flex; align-items:center; gap:22px; padding:16px 0; }
-  .logo-word{ font-size:24px; font-weight:800; letter-spacing:-0.02em; color:var(--ink); flex-shrink:0; }
+  .logo-word{ font-size:24px; font-weight:800; letter-spacing:-0.02em; color:var(--ink); flex-shrink:0; cursor:pointer; }
   .logo-word span{ color:var(--red); }
   .search-wrap{ flex:1; position:relative; max-width:480px; }
   .search-wrap input{ width:100%; background:var(--floor); border:1px solid var(--line); color:var(--ink); padding:10px 14px 10px 38px; border-radius:999px; font-size:14px; outline:none; }
@@ -184,18 +182,18 @@
 <script>
   window.API_BASE = 'https://meridian-store.onrender.com/api';
 </script>
-<div class="config-banner" id="configBanner">
-  Frontend is pointing at <code id="apiBaseLabel"></code> — edit <code>window.API_BASE</code> at the top of index.html once your backend is deployed.
-</div>
 
 <header>
   <div class="app header-row">
-    <div class="logo-word" id="logoWord">MERIDIAN<span>.</span></div>
+    <div class="logo-word" id="logoWord" onclick="setView('home')">MERIDIAN<span>.</span></div>
     <div class="search-wrap">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInput" placeholder="Search products...">
     </div>
     <div class="icons-row">
+      <button class="icon-btn" id="navHome" onclick="setView('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Shop
+      </button>
       <button class="icon-btn" id="navWishlist" onclick="setView('wishlist')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5 5 0 00-7.1 0L12 6.3l-1.7-1.7a5 5 0 00-7.1 7.1L12 21l8.8-9.3a5 5 0 000-7.1z"/></svg>Wishlist<span class="badge-count" id="wishCount" style="display:none">0</span>
       </button>
@@ -394,7 +392,6 @@
 
 <script>
 const API = window.API_BASE;
-document.getElementById('apiBaseLabel').textContent = API;
 
 let products = [];
 let categories = ['Men','Women','Home'];
